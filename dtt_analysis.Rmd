@@ -1,0 +1,29 @@
+---
+title: "datathon"
+author: "Eric Yi, ecyi"
+date: "3/25/2017"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r data}
+setwd("/Users/EricYi/Desktop/Code/datathon")
+library(ElemStatLearn)
+library(caret)
+library(caretEnsemble)
+library(plyr)
+library(plot3D)
+library(gbm)
+rfhome="/Users/EricYi/Desktop/Code/datathon/rulefit/"
+library(akima, lib.loc=rfhome)
+
+set.seed(0)
+```
+
+```{r data}
+dataframe <- read.csv('big_frame_final.csv', header=T)
+```
+

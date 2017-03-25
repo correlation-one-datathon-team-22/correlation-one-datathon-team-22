@@ -1,0 +1,111 @@
+
+                  RuleFit rules in order of importance
+
+Rule   1:     4  variables
+     support =  0.4038      coeff =  0.2009      importance =   100.0    
+     V25:  range = -0.9900E+36  0.1150    
+     V27:  range = -0.9900E+36  0.4000E-01
+     V46:  range = -0.9900E+36  0.1300    
+     V56:  range =   9.500      0.9900E+36
+
+Rule   2:     3  variables
+     support =  0.3789      coeff =  0.8575E-01  importance =   42.19    
+     V21:  range =  0.3750      0.9900E+36
+     V25:  range = -0.9900E+36  0.1350    
+     V46:  range = -0.9900E+36  0.1800    
+
+Rule   3:     4  variables
+     support =  0.4107      coeff =  0.6468E-01  importance =   32.28    
+     V25:  range = -0.9900E+36  0.9500E-01
+     V27:  range = -0.9900E+36  0.5000E-01
+     V37:  range = -0.9900E+36  0.3250    
+     V57:  range =   53.50      0.9900E+36
+
+Rule   4:     3  variables
+     support =  0.5930      coeff = -0.6453E-01  importance =   32.15    
+     V7:  range = -0.9900E+36  0.6500E-01
+     V52:  range = -0.9900E+36  0.8215    
+     V53:  range = -0.9900E+36  0.8000E-02
+
+Rule   5:     3  variables
+     support =  0.7047      coeff = -0.5939E-01  importance =   27.48    
+     V5:  range = -0.9900E+36  0.9000    
+     V23:  range = -0.9900E+36  0.1450    
+     V24:  range = -0.9900E+36  0.1700    
+
+Rule   6:     4  variables
+     support =  0.5673      coeff = -0.5392E-01  importance =   27.10    
+     V7:  range = -0.9900E+36  0.9250    
+     V24:  range = -0.9900E+36  0.1000E-01
+     V52:  range = -0.9900E+36  0.1575    
+     V53:  range = -0.9900E+36  0.3005    
+
+Rule   7:     3  variables
+     support =  0.6456      coeff = -0.5569E-01  importance =   27.02    
+     V7:  range = -0.9900E+36  0.2400    
+     V16:  range = -0.9900E+36  0.7100    
+     V53:  range = -0.9900E+36  0.5550E-01
+
+Rule   8:     2  variables
+     support =  0.2753      coeff =  0.5433E-01  importance =   24.61    
+     V19:  range =   2.045      0.9900E+36
+     V45:  range = -0.9900E+36  0.4700    
+
+Rule   9:     1  variables
+     support =  0.9315      coeff = -0.8973E-01  importance =   22.99    
+     V2:  range = -0.9900E+36  0.5300    
+
+Rule  10:     1  variables
+     support =  0.6925      coeff =  0.4868E-01  importance =   22.79    
+     V21:  range = -0.9900E+36   1.080    
+
+Rule  11:   linear V2
+     std =  0.2948     coeff = -0.7453E-01       impotance =   22.29    
+
+Rule  12:     3  variables
+     support =  0.5375      coeff =  0.4360E-01  importance =   22.05    
+     V25:  range = -0.9900E+36  0.6500E-01
+     V45:  range = -0.9900E+36  0.1300    
+     V46:  range = -0.9900E+36  0.1700    
+
+Rule  13:     4  variables
+     support =  0.3063      coeff =  0.4660E-01  importance =   21.79    
+     V12:  range = -0.9900E+36  0.1500    
+     V27:  range = -0.9900E+36  0.1400    
+     V46:  range = -0.9900E+36  0.4000E-01
+     V50:  range = -0.9900E+36  0.4730    
+
+Rule  14:     2  variables
+     support =  0.5616      coeff = -0.4115E-01  importance =   20.71    
+     V7:  range = -0.9900E+36  0.2500E-01
+     V55:  range = -0.9900E+36   2.732    
+
+Rule  15:     3  variables
+     support =  0.6493      coeff =  0.4187E-01  importance =   20.27    
+     V25:  range = -0.9900E+36  0.9000E-01
+     V27:  range = -0.9900E+36  0.2700    
+     V42:  range = -0.9900E+36  0.1250    
+
+Rule  16:     3  variables
+     support =  0.4886      coeff = -0.3752E-01  importance =   19.02    
+     V21:  range = -0.9900E+36   1.025    
+     V27:  range = -0.9900E+36  0.1500E-01
+     V52:  range = -0.9900E+36  0.8000    
+
+Rule  17:     4  variables
+     support =  0.6069      coeff = -0.3825E-01  importance =   18.95    
+     V7:  range = -0.9900E+36  0.7000E-01
+     V23:  range = -0.9900E+36  0.3450    
+     V52:  range = -0.9900E+36  0.4515    
+     V53:  range = -0.9900E+36  0.8100E-01
+
+Rule  18:     2  variables
+     support =  0.2153      coeff = -0.4386E-01  importance =   18.29    
+     V25:  range = -0.9900E+36  0.1500    
+     V56:  range =   42.50      0.9900E+36
+
+Rule  19:   linear V22
+     std =  0.1094     coeff =  0.1643           impotance =   18.23    
+
+Rule  20:   linear V37
+     std =  0.3246     coeff =  0.5488E-01       impotance =   18.07    

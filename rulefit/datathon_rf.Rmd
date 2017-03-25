@@ -1,0 +1,204 @@
+---
+title: 'Datathon 2: RuleFit'
+author: "Eric Yi, ecyi"
+date: "3/24/2017"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+setwd("/Users/EricYi/Desktop/Code/datathon/rulefit")
+rfhome="/Users/EricYi/Desktop/Code/datathon/rulefit/"
+library(akima, lib.loc=rfhome)
+set.seed(0)
+green_df = read.csv("green_final.csv", header=T)
+yellow_df = read.csv("yellow_final.csv", header=T)
+```
+
+```{r Hastie_spam_load}
+load_spam_data <- function(trainingScale=TRUE,responseScale=TRUE){ 
+  #
+  # R code to load in the spam data set from the book ESLII
+  #
+  # Output:
+  #
+  # res: list of data frames XT
+  #
+  # Written by:
+  # -- 
+  # John L. Weatherwax                2009-04-21
+  # 
+  # email: wax@alum.mit.edu
+  # 
+  # Please send comments and especially bug reports to the
+  # above email address.
+  # 
+  #-----
+
+  X      = read.table("https://statweb.stanford.edu/~tibs/ElemStatLearn/datasets/spam.data")
+  tt     = read.table("https://statweb.stanford.edu/~tibs/ElemStatLearn/datasets/spam.traintest")
+
+  # separate into training/testing sets
+  # (ESLII on epage 319 says that we have 3065 training instances)
+  # 
+  XTraining = subset( X, tt==0 )
+  p = dim(XTraining)[2]-1
+  
+  XTesting  = subset( X, tt==1 ) # (ESLII on epage 319 says that we have 1536 testing instances)
+
+  #
+  # Sometime data is processed and stored in a certain order.  When doing cross validation
+  # on such data sets we don't want to bias our results if we grab the first or the last samples.
+  # Thus we randomize the order of the rows in the Training data frame to make sure that each
+  # cross validation training/testing set is as random as possible.
+  # 
+  if( FALSE ){
+    nSamples = dim(XTraining)[1] 
+    inds = sample( 1:nSamples, nSamples )
+    XTraining = XTraining[inds,]
+  }
+
+  #
+  # In reality we have to estimate everything based on the training data only
+  # Thus here we estimate the predictor statistics using the training set
+  # and then scale the testing set by the same statistics
+  # 
+  if( trainingScale ){
+    X = XTraining 
+    if( responseScale ){
+      meanV58 = mean(X$V58) 
+      v58 = X$V58 - meanV58 
+    }else{
+      v58 = X$V58 
+    }
+    X$V58 = NULL
+    X = scale(X, TRUE, TRUE)
+    means = attr(X,"scaled:center")
+    stds = attr(X,"scaled:scale")
+    Xf = data.frame(X)
+    Xf$V58 = v58
+    XTraining = Xf
+
+    # scale the testing predictors by the same amounts:
+    # 
+    DCVTest  = XTesting
+    if( responseScale ){
+      v58Test = DCVTest$V58 - meanV58
+    }else{
+      v58Test = DCVTest$V58 # in physical units (not mean adjusted)
+    }
+    DCVTest$V58 = NULL 
+    DCVTest  = t( apply( DCVTest, 1, '-', means ) ) 
+    DCVTest  = t( apply( DCVTest, 1, '/', stds ) ) 
+    DCVTestb = cbind( DCVTest, v58Test ) # append back on the response
+    DCVTestf = data.frame( DCVTestb ) # a data frame containing all scaled variables of interest
+    names(DCVTestf)[p+1] = "V58" # fix the name of the response
+    XTesting = DCVTestf
+  }
+
+  # Many algorithms wont do well if the data is presented all of one class and
+  # then all of another class thus we permute our data frames :
+  #
+  XTraining = XTraining[sample(nrow(XTraining)),]
+  XTesting  = XTesting[sample(nrow(XTesting)),]
+
+  # Read in the list of s(pam)words (and delete garbage characters):
+  # 
+  spam_words = read.table("https://archive.ics.uci.edu/ml/machine-learning-databases/spambase/spambase.names",skip=33,sep=":",comment.char="|",stringsAsFactors=F)
+  spam_words = spam_words[[1]]
+  for( si in 1:length(spam_words) ){
+    spam_words[si] = sub( "word_freq_", "", spam_words[si] )
+    spam_words[si] = sub( "char_freq_", "", spam_words[si] )
+  }
+
+  return( list( XTraining, XTesting, spam_words ) ) 
+}
+
+testing_error_vs_n_boosts = function(m=FALSE, n_trees=0, preds=0, D_test){
+  # 
+  # Estimate the test set learning curve 
+  # 
+  test_error = matrix( 0, nrow=n_trees, ncol=1 )
+  if (m != FALSE){
+      n_trees = m$n.trees # trees = rows, or iterations of the model
+      for( nti in seq(1,n_trees) ){
+          Fhat = predict( m, D_test[,1:p], n.trees=nti )
+          pcc = mean( ( ( Fhat <= 0 ) & ( D_test[,p+1] == 0 ) ) | ( ( Fhat > 0 ) & ( D_test[,p+1] == 1 ) ) )
+          test_error[nti] = 1 - pcc
+          }
+      }
+  else{
+      pcc = mean(( ( preds <= 0 ) & ( D_test[,p+1] == -1 ) ) | ( ( preds > 0 ) & ( D_test[,p+1] == 1 ) ))
+      test_error = 1 - pcc
+  }
+  test_error 
+}
+```
+
+```{r spam model}
+PD         = load_spam_data(trainingScale=FALSE,responseScale=FALSE) # read in unscaled data
+p          = dim(PD[[1]])[2]-1 # the last column is the response 1=>Spam; 0=>Ham
+XTraining  = PD[[1]]; colnames(XTraining)[p+1] = "Y"
+XTesting   = PD[[2]]; colnames(XTesting)[p+1] = "Y"
+spam_words = PD[[3]]
+rownames(XTraining) <- 1:nrow(XTraining)
+XTraining$Y[XTraining$Y == 0] = -1
+XTesting$Y[XTesting$Y == 0] = -1
+```
+
+```{r rulefit}
+# http://statweb.stanford.edu/~jhf/r-rulefit/rulefit3/RuleFit_help.html
+rfmod = rulefit(green_df[,1:p], green_df[,p+1], mod.sel=3, rfmode="class")
+testing_error_vs_n_boosts(preds=ifelse((1.0/(1.0+exp(-(rfpred(green_df[,1:p])))) < 0.5), -1, 1),
+                          D_test=green_df)
+rfmodinfo(rfmod)
+```
+
+```{r}
+test_preds = data.frame(numeric(nrow(XTesting)))
+B=50
+for (i in 1:B){
+    train_set_ind = sample(rownames(XTraining), size=nrow(XTraining), replace=T)
+    train_set = XTraining[train_set_ind,]
+    rfmod = rulefit(train_set[,1:p], train_set[,p+1], mod.sel=3, rfmode="class",
+                    quiet=T)
+    yp = rfpred(XTesting[,1:p])
+    probs = 1.0/(1.0+exp(-yp))
+    Newcol_name = paste0(i)
+    test_preds[[Newcol_name]] <- probs
+}
+
+preds_strap <- rowMeans(test_preds[-1]) # drop the empty part of the dataframe
+preds_01 = ifelse((preds_strap < 0.5), -1, 1) # convert probabilities to 1's and 0's
+testing_error_vs_n_boosts(preds=preds_01, D_test=XTesting)
+rfmod = rulefit(XTraining[,1:p], XTraining[,p+1], mod.sel=3, rfmode="class")
+testing_error_vs_n_boosts(preds=ifelse((1.0/(1.0+exp(-(rfpred(XTesting[,1:p])))) < 0.5), -1, 1),
+                          D_test=XTesting)
+```
+
+```{r}
+paste("cross-validated error:")
+runstats(rfmod)$cri # cross-validated error
+paste("full cross-validation:")
+# metrics for fully cross-validated errors:
+# http://statweb.stanford.edu/~jhf/r-rulefit/rulefit3/RuleFit_help.html#rfxval
+# xval = rfxval(nfold=10, quiet=T)
+
+```
+
+```{r}
+pairplot("V3", "V23", type="persp", phi=35, theta=15)
+```
+
+```{r}
+vi = varimp()
+```
+
+```{r}
+int = interact(vars=c("V1", "V2", "V3", "V4", "V5"))
+```
+
+```{r}
+rules(beg=1, end=20)
+```
+
