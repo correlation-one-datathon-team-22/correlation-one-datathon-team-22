@@ -1,0 +1,95 @@
+---
+title: "Datathon - Interactive Heatmaps"
+author: "Govind Govind-Thomas"
+date: "3/25/2017"
+output: html_document
+runtime: shiny
+---
+
+# Interactive Heatmaps {.tabset}
+
+We can explore the evolution of the geographic distribution of yellow medallion taxi fares over time.
+
+## Uber
+
+## Yellow Medallion Taxis
+
+```{r}
+#require(devtools)
+#install_version("ggmap", version = "0.9.1", repos = "http://cran.us.r-project.org")
+#install.packages("ggmap", type = "source")
+library(ggmap, quietly = TRUE)
+
+demos <- read.csv('demographics.csv')
+bases <- read.csv('bases.csv')
+geo <- read.csv('geographic.csv')
+zones <- read.csv('zones.csv')
+#nta.by.days = read.csv('/Users/govindwarrier/Documents/Datathon/contest/2015_trips_by_NTA_days.csv')
+#nta.by.year = read.csv('/Users/govindwarrier/Documents/Datathon/contest/2015_trips_by_NTA_year.csv')
+
+map.ny.by.nta.zones = function(title = '', geo.min, nta.by.year) {
+  map <- get_map(location = 'New York City', zoom = 11)
+  plot <- ggmap(map) + ggtitle(title) + 
+    labs(x = 'Longitude', y = 'Latitude')
+  
+  for (i in 1:ncol(geo.min)) {
+    #browser()
+    zone = colnames(geo.min)[i]
+    coords = geo.min[,i][!is.na(geo.min[,i])] # Get coord vector
+    coord.mat = matrix(coords, ncol = 2, byrow = TRUE) # convert to matrix of lat/lon pairs
+    lons = coord.mat[,1]
+    lats = coord.mat[,2]
+    coord.df = data.frame(lons = lons, lats = lats)
+    uber.year.count = as.vector(subset(nta.by.year, nta_code == zone)$count)
+    plot = plot + geom_polygon(aes_string(x = lons, y = lats, fill = uber.year.count),
+                               data = coord.df, size = 0.1, col = 'black')
+  }
+  plot <- plot + scale_fill_continuous(guide = guide_legend(title = 'Trips'))
+  return(plot)
+}
+```
+
+
+```{r eruptions, echo=FALSE}
+green.by.day = read.csv('yellow_2014_by_days.csv')
+green.by.day2 = read.csv('yellow_2015_by_days.csv')
+green.by.day = rbind(green.by.day, green.by.day2)
+green.by.day$pickup_date = as.character(green.by.day$pickup_date)
+#green.today = subset(green.by.day, pickup_date == '2014-04-01')
+
+inputPanel(
+  dateInput('date', 'Date', value = '2014-04-01', min = '2014-04-01', max = '2015-04-30')
+)
+
+renderPlot({
+  nta.by.year = subset(green.by.day, pickup_date == input$date)
+  #nta.by.year = read.csv('/Users/govindwarrier/Documents/Datathon/contest/2014_trips_by_NTA_year.csv')
+  sim.cols = which(colnames(geo) %in% nta.by.year$nta_code)
+  geo.min = subset(geo, select = colnames(geo)[which(colnames(geo) %in% nta.by.year$nta_code)])
+  plot = map.ny.by.nta.zones('NYC Uber Rides by NTA Districts - 2014', geo.min = geo.min,
+                             nta.by.year = nta.by.year)
+  plot
+})
+```
+
+## Green Boro
+
+```{r}
+green.by.day = read.csv('green_trips_by_NTA_days.csv')
+green.by.day$pickup_date = as.character(green.by.day$pickup_date)
+#green.today = subset(green.by.day, pickup_date == '2014-04-01')
+
+inputPanel(
+  dateInput('date', 'Date', value = '2014-04-01', min = '2014-04-01', max = '2015-06-30')
+)
+
+renderPlot({
+  nta.by.year = subset(green.by.day, pickup_date == input$date)
+  #nta.by.year = read.csv('/Users/govindwarrier/Documents/Datathon/contest/2014_trips_by_NTA_year.csv')
+  sim.cols = which(colnames(geo) %in% nta.by.year$nta_code)
+  geo.min = subset(geo, select = colnames(geo)[which(colnames(geo) %in% nta.by.year$nta_code)])
+  plot = map.ny.by.nta.zones('NYC Uber Rides by NTA Districts - 2014', geo.min = geo.min,
+                             nta.by.year = nta.by.year)
+  plot
+})
+```

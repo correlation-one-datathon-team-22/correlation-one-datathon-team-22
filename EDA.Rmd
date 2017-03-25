@@ -1,0 +1,317 @@
+---
+title: "Datathon EDA"
+author: "Govind Govind-Thomas"
+date: "3/25/2017"
+output: html_document
+---
+
+## Mapping NTA Zones
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+
+```{r, cache=TRUE, echo=FALSE}
+demos <- read.csv('/Users/govindwarrier/Documents/Datathon/contest/demographics.csv')
+bases <- read.csv('/Users/govindwarrier/Documents/Datathon/contest/bases.csv')
+geo <- read.csv('/Users/govindwarrier/Documents/Datathon/contest/geographic.csv')
+zones <- read.csv('/Users/govindwarrier/Documents/Datathon/contest/zones.csv')
+nta.by.days = read.csv('/Users/govindwarrier/Documents/Datathon/contest/2015_trips_by_NTA_days.csv')
+nta.by.year = read.csv('/Users/govindwarrier/Documents/Datathon/contest/2015_trips_by_NTA_year.csv')
+```
+
+```{r}
+library(maps)
+library(ggmap)
+map <- get_map(location = 'New York City', zoom = 11)
+plot <- ggmap(map)
+
+for (i in 1:ncol(geo)) {
+  zone = colnames(geo)[i]
+  coords = geo[,i][!is.na(geo[,i])] # Get coord vector
+  coord.mat = matrix(coords, ncol = 2, byrow = TRUE) # convert to matrix of lat/lon pairs
+  lons = coord.mat[,1]
+  lats = coord.mat[,2]
+  plot <- plot + geom_point(aes(x = lats, y = lons))
+}
+plot
+```
+
+```{r}
+for (i in 1:1) {
+  zone = colnames(geo)[i]
+  coords = geo[,i][!is.na(geo[,i])] # Get coord vector
+  coord.mat = matrix(coords, ncol = 2, byrow = TRUE) # convert to matrix of lat/lon pairs
+  lons = coord.mat[,1]
+  lats = coord.mat[,2]
+  #plot <- plot + geom_point(aes(x = lats, y = lons))
+}
+coord.df = data.frame(lons = lons, lats = lats)
+map <- get_map(location = 'New York City', zoom = 11)
+ggmap(map) + geom_point(aes(x = lons, y = lats), data = coord.df, size = 0.1, col = 'blue')
+#qmplot(lons, lats, data = coord.df, source='google')
+```
+
+```{r}
+map.ny.by.nta.zones = function() {
+  map <- get_map(location = 'New York City', zoom = 11)
+  plot <- ggmap(map)
+  for (i in 1:ncol(geo)) {
+    zone = colnames(geo)[i]
+    coords = geo[,i][!is.na(geo[,i])] # Get coord vector
+    coord.mat = matrix(coords, ncol = 2, byrow = TRUE) # convert to matrix of lat/lon pairs
+    lons = coord.mat[,1]
+    lats = coord.mat[,2]
+    coord.df = data.frame(lons = lons, lats = lats)
+    plot <- plot + geom_point(aes(x = lons, y = lats), data = coord.df, size = 0.1, col = 'blue')
+  }
+  return(plot)
+}
+
+plot = map.ny.by.nta.zones()
+plot
+```
+
+```{r}
+map.ny.by.nta.zones = function() {
+  map <- get_map(location = 'New York City', zoom = 11)
+  plot <- ggmap(map)
+  for (i in 1:ncol(geo)) {
+    zone = colnames(geo)[i]
+    coords = geo[,i][!is.na(geo[,i])] # Get coord vector
+    coord.mat = matrix(coords, ncol = 2, byrow = TRUE) # convert to matrix of lat/lon pairs
+    lons = coord.mat[,1]
+    lats = coord.mat[,2]
+    coord.df = data.frame(lons = lons, lats = lats)
+    plot <- plot + geom_polygon(aes(x = lons, y = lats), data = coord.df, size = 0.1, col = 'blue')
+  }
+  return(plot)
+}
+
+plot = map.ny.by.nta.zones()
+plot
+```
+
+```{r, cache=TRUE}
+# Uber 2015 1M
+nta.by.year = read.csv('/Users/govindwarrier/Documents/Datathon/contest/2015_trips_by_NTA_year_1m.csv')
+sim.cols = which(colnames(geo) %in% nta.by.year$nta_code)
+geo.min = subset(geo, select = colnames(geo)[which(colnames(geo) %in% nta.by.year$nta_code)])
+map.ny.by.nta.zones = function(title = '') {
+  map <- get_map(location = 'New York City', zoom = 11)
+  plot <- ggmap(map) + ggtitle(title) + 
+    labs(x = 'Longitude', y = 'Latitude')
+  
+  for (i in 1:ncol(geo.min)) {
+    #browser()
+    zone = colnames(geo.min)[i]
+    coords = geo.min[,i][!is.na(geo.min[,i])] # Get coord vector
+    coord.mat = matrix(coords, ncol = 2, byrow = TRUE) # convert to matrix of lat/lon pairs
+    lons = coord.mat[,1]
+    lats = coord.mat[,2]
+    coord.df = data.frame(lons = lons, lats = lats)
+    uber.year.count = as.vector(subset(nta.by.year, nta_code == zone)$count)
+    plot = plot + geom_polygon(aes_string(x = lons, y = lats, fill = uber.year.count),
+                               data = coord.df, size = 0.1, col = 'black')
+  }
+  plot <- plot + scale_fill_continuous(guide = guide_legend(title = 'Trips'))
+  return(plot)
+}
+
+plot = map.ny.by.nta.zones()
+plot
+```
+
+
+```{r}
+# 2014 Uber trip heatmap
+nta.by.year = read.csv('/Users/govindwarrier/Documents/Datathon/contest/2014_trips_by_NTA_year.csv')
+sim.cols = which(colnames(geo) %in% nta.by.year$nta_code)
+geo.min = subset(geo, select = colnames(geo)[which(colnames(geo) %in% nta.by.year$nta_code)])
+plot = map.ny.by.nta.zones('NYC Uber Rides by NTA Districts - 2014')
+plot
+```
+
+```{r, cache=TRUE}
+# 2015 yellow medallion heatmap
+nta.by.year = read.csv('/Users/govindwarrier/Documents/Datathon/contest/yellow_2015_by_year-2.csv')
+sim.cols = which(colnames(geo) %in% nta.by.year$nta_code)
+geo.min = subset(geo, select = colnames(geo)[which(colnames(geo) %in% nta.by.year$nta_code)])
+plot = map.ny.by.nta.zones('NYC Yellow Medallion Taxi Rides by NTA Districts - 2015')
+plot
+```
+
+```{r}
+# 2014 yellow medallion heatmap
+nta.by.year = read.csv('/Users/govindwarrier/Documents/Datathon/contest/yellow_2014_by_year-2.csv')
+sim.cols = which(colnames(geo) %in% nta.by.year$nta_code)
+geo.min = subset(geo, select = colnames(geo)[which(colnames(geo) %in% nta.by.year$nta_code)])
+plot = map.ny.by.nta.zones('NYC Yellow Medallion Taxi Rides by NTA Districts - 2014')
+plot
+```
+
+```{r}
+# 2014/5 yellow medallion heatmap
+nta.by.year = read.csv('/Users/govindwarrier/Documents/Datathon/contest/green_trips_by_NTA_year.csv')
+sim.cols = which(colnames(geo) %in% nta.by.year$nta_code)
+geo.min = subset(geo, select = colnames(geo)[which(colnames(geo) %in% nta.by.year$nta_code)])
+plot = map.ny.by.nta.zones('NYC Green Boro Taxi Rides by NTA Districts - 2014-15')
+plot
+```
+
+## Modeling
+
+```{r}
+big.data.min = read.csv('big_frame_final-2.csv')
+#big.data.min = subset(big.data, select = c("service", "nta_code", "pickup_date",
+#                                           "avg_households", "avg_population",
+#                                           "avg_ppl_per_acre", "count", "median_median_age",
+#                                           "median_median_income"))
+yellow.df = subset(big.data.min, service == 'yellow')
+green.df = subset(big.data.min, service == 'green')
+uber.df = subset(big.data.min, service == 'uber')
+yellow.df.2 = merge(yellow.df, uber.df, by.x = c('nta_code', 'pickup_date'), 
+                    by.y = c('nta_code','pickup_date'), all.x = TRUE)
+green.df.2 = merge(green.df, uber.df, by.x = c('nta_code', 'pickup_date'), 
+                   by.y = c('nta_code', 'pickup_date'), all.x = TRUE)
+yellow.df.2 = subset(yellow.df.2, select = c("service.x", "nta_code", "pickup_date",
+                                             "avg_households.x", "avg_population.x",
+                                             "avg_ppl_per_acre.x", "count.x", "median_median_age.x",
+                                             "median_median_income.x", 'count.y'))
+yellow.df.2$count.y = ifelse(is.na(yellow.df.2$count.y), 0, yellow.df.2$count.y)
+
+green.df.2 = subset(green.df.2, select = c("service.x", "nta_code", "pickup_date",
+                                             "avg_households.x", "avg_population.x",
+                                             "avg_ppl_per_acre.x", "count.x", "median_median_age.x",
+                                             "median_median_income.x", 'count.y'))
+green.df.2$count.y = ifelse(is.na(green.df.2$count.y), 0, green.df.2$count.y)
+```
+
+```{r}
+# Rulefit models
+write.csv(yellow.df.2, file = '/Users/govindwarrier/Desktop/yellow_final.csv')
+write.csv(green.df.2, file = '/Users/govindwarrier/Desktop/green_final.csv')
+```
+
+```{r}
+setwd('/Users/govindwarrier/Documents/Datathon/datathon/rulefit/')
+get.rule.mod.err = function(preds, outcomes) {
+  confuse.mat = table(preds, outcomes)
+  err = (confuse.mat[1,2] + confuse.mat[2,1]) / length(outcomes)
+  return(err)
+}
+
+platform = "mac"
+rfhome = "/Users/govindwarrier/Documents/Datathon/datathon/rulefit/"
+source(paste(rfhome, "rulefit.r", sep = ''))
+library(akima)
+```
+
+```{r}
+green.df.2 = green.df.2[,-which(colnames(green.df.2) == 'service.x')]
+green.df.2 = green.df.2[,-which(colnames(green.df.2) == 'nta_code')]
+green.df.2 = green.df.2[,-which(colnames(green.df.2) == 'pickup_date')]
+green.df.2 = green.df.2[sample(nrow(green.df.2), replace = FALSE),]
+colnames(green.df.2) = c("avg_households", "avg_pop", "avg_ppl_acre",
+                          "Green Count", "median_age", "median_income", "Uber Count")
+train.inds = sample(nrow(green.df.2), size = 0.5 * nrow(green.df.2), replace = FALSE)
+train = green.df.2[train.inds,]
+test = green.df.2[-train.inds,]
+p <- ncol(green.df.2) - 1
+rf.mod = rulefit(x = green.df.2[,-4], y = green.df.2[,4], rfmode = 'regress', tree.size = 3, 
+                 memory.par = 0.01, mod.sel = 1)
+#probs = 1.0/(1.0+exp(-(rfpred(spam.test[,1:p]))))
+#preds = ifelse(probs < 0.5, -1, 1)
+#get.rule.mod.err(preds, spam.test$spam)
+```
+
+```{r}
+rfpred(test[,-4])
+```
+
+```{r}
+rfmodinfo(rf.mod)
+```
+
+```{r}
+paste("cross-validated error:")
+runstats(rf.mod)$cri # cross-validated error
+paste("full cross-validation:")
+# metrics for fully cross-validated errors:
+# http://statweb.stanford.edu/~jhf/r-rulefit/rulefit3/RuleFit_help.html#rfxval
+rfxval(nfold=10, quiet=T)
+```
+
+```{r}
+pairplot("V3", "V23", type="persp", phi=35, theta=15)
+```
+
+```{r}
+vi = varimp()
+```
+
+```{r}
+int = interact(vars=c("V1", "V2", "V3", "V4", "V5"))
+```
+
+```{r}
+rules(beg=1, end=20)
+```
+
+```{r}
+mean((test$count.x - rfpred(test[,-4]))^2)
+```
+
+```{r}
+library(glmnet, quietly = TRUE)
+train[is.na(train)] <- 0
+#options(na.action='na.pass')
+mod.mat = model.matrix(count.x ~ ., data=train)
+glm.mod = glmnet(x = mod.mat, y = train[,4], family = 'gaussian', alpha = 1)
+plot(cv.glmnet(mod.mat, train[,4], alpha = 1), main = 'Lasso Regression Performance')
+```
+
+```{r}
+library(glmnet, quietly = TRUE)
+train[is.na(train)] <- 0
+#options(na.action='na.pass')
+mod.mat = model.matrix(count.x ~ ., data=train)
+glm.mod = glmnet(x = mod.mat, y = train[,4], family = 'gaussian', alpha = 1)
+plot(cv.glmnet(mod.mat, train[,4], alpha = 1), main = 'Lasso Regression Performance')
+```
+
+```{r}
+yellow.df.2 = yellow.df.2[,-which(colnames(yellow.df.2) == 'service.x')]
+yellow.df.2 = yellow.df.2[,-which(colnames(yellow.df.2) == 'nta_code')]
+yellow.df.2 = yellow.df.2[,-which(colnames(yellow.df.2) == 'pickup_date')]
+yellow.df.2 = yellow.df.2[sample(nrow(yellow.df.2), replace = FALSE),]
+colnames(yellow.df.2) = c("avg_households", "avg_pop", "avg_ppl_acre",
+                          "Yellow Count", "median_age", "median_income", "Uber Count")
+train.inds = sample(nrow(yellow.df.2), size = 0.5 * nrow(yellow.df.2), replace = FALSE)
+train = yellow.df.2[train.inds,]
+test = yellow.df.2[-train.inds,]
+
+train[is.na(train)] <- 0
+#options(na.action='na.pass')
+#mod.mat = model.matrix(count.x ~ ., data=train)
+#glm.mod = glmnet(x = mod.mat, y = train[,4], family = 'gaussian', alpha = 1)
+#plot(cv.glmnet(mod.mat, train[,4], alpha = 1), main = 'Lasso Regression Performance')
+
+p <- ncol(yellow.df.2) - 1
+rf.mod = rulefit(x = yellow.df.2[,-4], y = yellow.df.2[,4], rfmode = 'regress', tree.size = 3, 
+                 memory.par = 0.01, mod.sel = 1)
+```
+```{r}
+paste("cross-validated error:")
+runstats(rf.mod)$cri # cross-validated error
+paste("full cross-validation:")
+# metrics for fully cross-validated errors:
+# http://statweb.stanford.edu/~jhf/r-rulefit/rulefit3/RuleFit_help.html#rfxval
+rfxval(nfold=10, quiet=T)
+```
+
+```{r}
+vi = varimp()
+```
+
